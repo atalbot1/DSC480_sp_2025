@@ -2,12 +2,7 @@
 title: "2024-11_Data check"
 #author: 
 #date: 2024/06/23
-format: pdf     getwd()
-  html:
-    fig.height: 2
-    fig.width: 7
-    fig-format: png
-    fig-dpi: 300
+format: pdf
 editor_options: 
   chunk_output_type: console
 ---

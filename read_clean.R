@@ -3,14 +3,10 @@
 ## Change the working directory and file paths as appropriate
 
 #setwd("Users\atalb\OneDrive\Documents\R Studio\DSC480_sp_2025")
-# cd "C:\Users\atalb\OneDrive\Documents\R Studio\DSC480_sp_2025"
+#cd "C:\Users\atalb\OneDrive\Documents\R Studio\DSC480_sp_2025"
 
 library(tidyverse)
 library(lubridate)
-
-# Actual data files
-#events <- read_csv("../data/2024_11_25_utilization_events.csv")
-#report <- read_csv("../data/2024_11_25_utilization_report.csv")
 
 # Toy data files- these have the row values for each column shuffled separately.
 events <- read_csv("events_toy.csv")

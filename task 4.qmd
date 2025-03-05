@@ -1,0 +1,96 @@
+---
+title: "Task 4"
+---
+
+```{r}
+install.packages("readxl")
+library(tidyverse)
+library(readxl)
+```
+
+```{r}
+UniCare_Analysis <- read_excel("Copy of UniCare Consumer Analysis .xlsx")
+```
+
+```{r}
+summary(UniCare_Analysis)
+```
+```{r}
+# Removing rows with NA values in the dataset
+cleaned_data <- na.omit(UniCare_Analysis)
+
+# Alternatively, replace NA values with a specific value (e.g., "Missing")
+UniCare_Analysis[is.na(UniCare_Analysis)] <- "Missing"
+
+```
+
+```{r}
+# Converting character columns representing dates into Date format
+UniCare_Analysis$`Week of 2/10/2024` <- as.Date(UniCare_Analysis$`Week of 2/10/2024`, format="%m/%d/%Y")
+
+# Convert logical columns to factors
+UniCare_Analysis$Week_of_2_10_2024_logical <- as.factor(UniCare_Analysis$`Week of 2/10/2024`)
+
+# Ensure correct data types for all weeks' columns
+UniCare_Analysis[] <- lapply(UniCare_Analysis, function(x) {
+  if(is.character(x)) as.factor(x) else x
+})
+
+```
+
+
+```{r}
+# Frequency count of unique values in a column (e.g., "Week of 2/10/2024")
+table(UniCare_Analysis$`Week of 2/10/2024`)
+
+# Apply to all columns with character data
+apply(UniCare_Analysis, 2, function(x) if(is.character(x)) table(x) else NULL)
+
+```
+```{r}
+# Assuming you're looking at trends for a specific characteristic over weeks
+library(ggplot2)
+
+# Reshape data for visualization (long format)
+library(tidyr)
+long_data <- gather(UniCare_Analysis, key = "Week", value = "Value", -ID)  # assuming "ID" as the identifier column
+
+ggplot(long_data, aes(x=Week, fill=Value)) +
+  geom_bar(position="stack") +
+  theme(axis.text.x = element_text(angle=90, hjust=1)) +
+  labs(title="Trends Across Weeks", x="Week", y="Frequency")
+
+```
+
+```{r}
+# Filter rows where a specific column matches a value (e.g., "Week of 2/10/2024")
+filtered_data <- subset(UniCare_Analysis, "Week of 2/10/2024" == "Specific Value")
+
+# Or filter based on logical conditions (e.g., TRUE/FALSE values in logical columns)
+filtered_data_logical <- UniCare_Analysis[UniCare_Analysis$`Week of 2/10/2024` == TRUE, ]
+
+```
+
+
+```{r}
+# Calculate mean for a numeric column (if applicable)
+mean(UniCare_Analysis$"Week of 2/10/2024")
+
+# Calculate descriptive statistics for logical columns (e.g., percentage of TRUE values)
+mean(UniCare_Analysis$"Week of 2/10/2024" == TRUE) * 100  # Percentage of TRUE values
+
+```
+
+```{r}
+# Create a contingency table for two columns (e.g., "Week of 2/10/2024" and "Week of 2/24/2024")
+table(UniCare_Analysis$`Week of 2/10/2024`, UniCare_Analysis$`Week of 2/24/2024`)
+
+# Perform chi-square test for independence
+chisq.test(table(UniCare_Analysis$"Week of 2/10/2024", UniCare_Analysis$"Week of 2/24/2024"))
+
+```
+
+
+
+
+

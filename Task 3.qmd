@@ -1,0 +1,129 @@
+---
+title: "Task 3"
+format: pdf
+---
+
+```{r}
+library(dplyr)
+```
+
+```{r}
+source("task02.qmd")
+```
+
+```{r}
+unique(events_full$org_name)
+```
+
+```{r}
+UnicareDuringibis <- events_full %>%
+  filter(org_name %in% c("Unicare - Study", "Unicare"), during_ibis == 1) %>%
+  nrow()
+
+print(UnicareDuringibis)
+```
+
+```{r}
+MIIANotIbis <- events_full %>%
+  filter(org_name %in% c("MIIA - Lee", "MIIA - Amherst","MIIA - Southbridge", "MIIA-Pittsfield","MIIA", "MIIA - Maynard", "MIIA - Walpole","MIIA - Taunton","MIIA - Sturbridge","MIIA - Dighton","MIIA - Southwick","MIIA - Triton","MIIA - Orange","MIIA - North Adams","MIIA - Tyngsboro"), during_ibis == 0) %>%
+  nrow()
+
+print(MIIANotIbis)
+```
+
+```{r}
+UnicareNotibis <- events_full %>%
+  filter(org_name %in% c("Unicare - Study", "Unicare"), during_ibis == 0) %>%
+  nrow()
+
+print(UnicareNotibis)
+```
+
+```{r}
+MIIADuringIbis <- events_full %>%
+  filter(org_name %in% c("MIIA - Lee", "MIIA - Amherst","MIIA - Southbridge", "MIIA-Pittsfield","MIIA", "MIIA - Maynard", "MIIA - Walpole","MIIA - Taunton","MIIA - Sturbridge","MIIA - Dighton","MIIA - Southwick","MIIA - Triton","MIIA - Orange","MIIA - North Adams","MIIA - Tyngsboro"), during_ibis == 1) %>%
+  nrow()
+
+print(MIIADuringIbis)
+```
+
+```{r}
+MIIAInpatientAdmits <- events_full %>%
+  filter(org_name %in% c("MIIA - Lee", "MIIA - Amherst", "MIIA - Southbridge", "MIIA-Pittsfield", "MIIA", "MIIA - Maynard", "MIIA - Walpole", "MIIA - Taunton", "MIIA - Sturbridge", "MIIA - Dighton", "MIIA - Southwick", "MIIA - Triton", "MIIA - Orange", "MIIA - North Adams", "MIIA - Tyngsboro"), 
+         event_duration_days > 0) %>%
+  group_by(org_name) %>%
+  summarise(inpatient_count = n()) %>%
+  bind_rows(
+    tibble(org_name = "AllMIIA", inpatient_count = sum(.$inpatient_count))
+  )
+```
+
+```{r}
+UnicareInpatientAdmits <- events_full %>%
+  filter(org_name %in% c("Unicare - Study", "Unicare"), 
+         event_duration_days > 0) %>%
+  group_by(org_name) %>%  
+  summarise(inpatient_count = n()) %>%
+  bind_rows(
+    tibble(org_name = "AllUnicare", inpatient_count = sum(.$inpatient_count))
+  )
+```
+
+```{r}
+MIIAInpatientAdmits <- events_full %>%
+  filter(org_name %in% c("MIIA - Lee", "MIIA - Amherst", "MIIA - Southbridge", "MIIA-Pittsfield", "MIIA", "MIIA - Maynard", "MIIA - Walpole", "MIIA - Taunton", "MIIA - Sturbridge", "MIIA - Dighton", "MIIA - Southwick", "MIIA - Triton", "MIIA - Orange", "MIIA - North Adams", "MIIA - Tyngsboro"), 
+         event_duration_days > 0) %>%
+  group_by(org_name) %>%
+  summarise(inpatient_count = n()) %>%
+  bind_rows(
+    tibble(org_name = "AllMIIA", inpatient_count = sum(.$inpatient_count))
+  )
+```
+
+```{r}
+combined <- bind_rows(MIIAInpatientAdmits, UnicareInpatientAdmits)
+```
+
+```{r}
+print(UnicareInpatientAdmits)
+
+print(MIIAInpatientAdmits)
+```
+
+```{r}
+library(ggplot2)
+```
+
+```{r}
+ggplot(UnicareInpatientAdmits, aes(x = org_name, y = inpatient_count, color = org_name, fill = org_name)) +
+  geom_bar(stat = "identity", show.legend = FALSE) +
+  labs(title = "Inpatient Admits for Unicare/Unicare-Study", 
+       x = "Group", 
+       y = "Inpatient Admit Count") +
+  theme_minimal()
+```
+
+```{r}
+ggplot(MIIAInpatientAdmits, aes(x = org_name, y = inpatient_count, color = org_name, fill = org_name)) +
+  geom_bar(stat = "identity", show.legend = TRUE) +
+  labs(title = "Inpatient Admits for MIIA", 
+       x = "Group", 
+       y = "Inpatient Admit Count") +
+  theme_minimal() +
+  theme(axis.title.x = element_blank(), #remove x-axis title
+        axis.text.x = element_blank(), 
+        )
+```
+
+```{r}
+filter <- subset(combined, org_name %in% c("AllUnicare", "AllMIIA"))
+```
+
+```{r}
+ggplot(filter, aes(x = org_name, y = inpatient_count, color = org_name, fill = org_name)) +
+  geom_bar(stat = "identity", show.legend = FALSE) +
+  labs(title = "Inpatient Data MIIA vs Unicare", 
+       x = "Group", 
+       y = "Inpatient Admit Count") +
+  theme_minimal()
+```

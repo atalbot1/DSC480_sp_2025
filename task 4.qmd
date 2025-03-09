@@ -91,6 +91,278 @@ chisq.test(table(UniCare_Analysis$"Week of 2/10/2024", UniCare_Analysis$"Week of
 ```
 
 
+```{r}
+library(readr)
+utilization_events <- read_csv("2025_02_18_utilization_events.csv")
+utilization_report <- read_csv("2025_02_18_utilization_report.csv")
+```
+```{r}
+summary(utilization_events)
+```
+```{r}
+summary(utilization_report)
+```
+
+### Real Data
+
+Age distribution
+```{r}
+# Number of records by state
+table(report_full$state)
+
+# Plot the distribution
+barplot(table(report_full$state), las=2, col='skyblue', main='Number of Members by State')
+
+```
+
+State-wise count
+```{r}
+# Frequency of event types
+table(report_full$event_type)
+
+# Proportion of event types
+prop.table(table(report_full$event_type))
+
+# Visualization
+library(ggplot2)
+ggplot(report_full, aes(x = event_type)) +
+  geom_bar(fill = "steelblue") +
+  theme_minimal() +
+  labs(title = "Event Type Distribution", x = "Event Type", y = "Count")
+
+```
+event type frequency
+```{r}
+# Diabetes prevalence
+table(report_full$diabetes)
+
+# Proportion of members with diabetes
+prop.table(table(report_full$diabetes))
+
+# You can loop through all conditions if needed
+conditions <- c("diabetes", "hypertension", "asthma", "depression")
+
+for (cond in conditions) {
+  print(paste("Condition:", cond))
+  print(table(report_full[[cond]]))
+  print(prop.table(table(report_full[[cond]])))
+}
+
+```
+Prevalance of diabetes(or any other condition)
+```{r}
+# Diabetes prevalence
+table(report_full$diabetes)
+
+# Proportion of members with diabetes
+prop.table(table(report_full$diabetes))
+
+# You can loop through all conditions if needed
+conditions <- c("diabetes", "hypertension", "asthma", "depression")
+
+for (cond in conditions) {
+  print(paste("Condition:", cond))
+  print(table(report_full[[cond]]))
+  print(prop.table(table(report_full[[cond]])))
+}
+
+```
+
+Members with IBIS coverage vs without
+```{r}
+# How many members have IBIS coverage days greater than zero
+sum(report_full$covered_days_on_ibis > 0)
+
+# Proportion
+mean(report_full$covered_days_on_ibis > 0)
+
+```
+Compare ER visits pre vs post IBIS
+```{r}
+# Pre-IBIS ER visits
+summary(report_full$pre_ibis_er)
+
+# Post-IBIS ER visits
+summary(report_full$post_ibis_er)
+
+# Members who had ER visits decrease after IBIS started
+report_full$er_diff <- report_full$pre_ibis_er - report_full$post_ibis_er
+sum(report_full$er_diff > 0)
+
+# Proportion of members with reduced ER visits
+mean(report_full$er_diff > 0)
+
+```
+Inpatient days comparison
+```{r}
+# Total inpatient days before and after IBIS
+sum(report_full$pre_ibis_inpatient_days, na.rm = TRUE)
+sum(report_full$post_ibis_inpatient_days, na.rm = TRUE)
+
+# Average inpatient days per member
+mean(report_full$pre_ibis_inpatient_days, na.rm = TRUE)
+mean(report_full$post_ibis_inpatient_days, na.rm = TRUE)
+
+```
+Members with completed reminders
+```{r}
+# Members with at least one completed reminder day
+sum(report_full$completed_reminder_days > 0)
+
+# Distribution of completed reminder days
+summary(report_full$completed_reminder_days)
+
+# Histogram
+hist(report_full$completed_reminder_days, breaks=20, main="Completed Reminder Days", col="purple")
+
+```
+
+DCP engagement
+```{r}
+# Average DCP count
+mean(report_full$dcp_count, na.rm = TRUE)
+
+# Members with high DCP counts
+high_dcp <- report_full[report_full$dcp_count > 1000, ]
+nrow(high_dcp)
+
+# View them
+head(high_dcp)
+
+```
+Members with diabetes and hypertension
+```{r}
+# Members with both conditions
+both_conditions <- subset(report_full, diabetes == 1 & hypertension == 1)
+nrow(both_conditions)
+
+# Explore
+summary(both_conditions)
+
+```
+Members over 80 with at least 1 ER visit post IBIS
+```{r}
+elderly_er <- subset(report_full, age > 80 & post_ibis_er > 0)
+nrow(elderly_er)
+
+# Look at a few columns
+elderly_er[, c("pid", "age", "post_ibis_er", "covered_days_on_ibis")]
+
+```
+Time-based Analysis
+```{r}
+# Convert dates if available
+report_full$event_start_date <- as.Date(report_full$event_start_date)
+
+# Filter events after a certain date
+after_date <- subset(report_full, event_start_date >= as.Date("2023-01-01"))
+
+```
+
+
+Unique values and counts for events_full
+```{r}
+# Unique event types
+unique(events_full$event_type)
+
+# Frequency count of event types
+table(events_full$event_type)
+
+# Plot event type distribution
+library(ggplot2)
+ggplot(events_full, aes(x = event_type)) +
+  geom_bar(fill = "steelblue") +
+  theme_minimal() +
+  labs(title = "Event Type Frequency", x = "Event Type", y = "Count")
+
+```
+
+state-wise event distribution
+```{r}
+# Count of events by state
+table(events_full$state)
+
+# Plot events by state
+ggplot(events_full, aes(x = state)) +
+  geom_bar(fill = "purple") +
+  theme_minimal() +
+  labs(title = "Events by State", x = "State", y = "Event Count") +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+
+
+```
+Patient event counts
+```{r}
+# Number of events per patient
+events_per_patient <- table(events_full$pid)
+
+# Summary of event counts per patient
+summary(events_per_patient)
+
+# Patients with more than 50 events
+high_utilizers <- events_per_patient[events_per_patient > 50]
+length(high_utilizers)
+
+# List top 10 high utilizers
+head(sort(events_per_patient, decreasing = TRUE), 10)
+
+```
+Compare by pid
+```{r}
+# Unique patient IDs
+events_pids <- unique(events_full$pid)
+reports_pids <- unique(report_full$pid)
+
+# How many pids are in both datasets?
+common_pids <- intersect(events_pids, reports_pids)
+length(common_pids)
+
+# Proportion overlap
+length(common_pids) / length(events_pids)  # % of events patients with reports
+length(common_pids) / length(reports_pids) # % of reports patients with events
+
+
+```
+Merge the datasets to do patient-level comparisons
+```{r}
+# Merge by pid (you could do inner_join or left_join)
+library(dplyr)
+
+merged_data <- inner_join(events_full, report_full, by = "pid")
+
+# Preview merged dataset
+head(merged_data)
+
+```
+
+find high utilizers in both datasets
+```{r}
+# Number of events per patient
+events_per_patient <- events_full %>%
+  group_by(pid) %>%
+  summarise(event_count = n())
+
+# Number of reports per patient
+reports_per_patient <- report_full %>%
+  group_by(pid) %>%
+  summarise(report_count = n())
+
+# Combine counts into one data frame
+patient_activity <- inner_join(events_per_patient, reports_per_patient, by = "pid")
+
+# Preview
+head(patient_activity)
+
+# Correlation between number of events and reports
+cor(patient_activity$event_count, patient_activity$report_count, use = "complete.obs")
+
+# Scatter plot
+ggplot(patient_activity, aes(x = event_count, y = report_count)) +
+  geom_point(alpha = 0.6, color = "darkblue") +
+  theme_minimal() +
+  labs(title = "Patient Event Count vs Report Count", x = "Event Count", y = "Report Count")
+
+```
 
 
 

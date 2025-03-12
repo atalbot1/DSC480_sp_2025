@@ -105,7 +105,7 @@ summary(utilization_report)
 
 ### Real Data
 
-Age distribution
+State distribution
 ```{r}
 # Number of records by state
 table(report_full$state)
@@ -364,5 +364,66 @@ ggplot(patient_activity, aes(x = event_count, y = report_count)) +
 
 ```
 
+event counts
+```{r}
+# Count of events by event_type
+event_counts <- table(events_full$event_type)
+print(event_counts)
+
+```
+report counts
+```{r}
+event_type_counts <- table(report_full$event_type)
+
+status_counts <- table(report_full$status)
+
+tablet_status_counts <- table(report_full$tablet_status)
+
+condition_columns <- c(
+  "alzheimers", "anemia", "anxiety", "arthritis", "asthma", "atrial_fibrillation",
+  "breast_cancer", "cataract", "chd", "chf", "colorectal_cancer", "copd",
+  "dementia", "depression", "diabetes", "endometrial_cancer", "glaucoma",
+  "heart_attack", "hip_fracture", "hyperlipidemia", "hyperplasia", "hypertension",
+  "hypothyroidism", "kidney_disease", "lung_cancer", "mild_cognitive_impairment",
+  "osteoporosis", "parkinsons", "pneumonia", "prostate_cancer", "stroke",
+  "urologic_cancer"
+)
+
+condition_counts <- colSums(report_full[condition_columns], na.rm = TRUE)
+
+ibis_er_count <- sum(report_full$ibis_er, na.rm = TRUE)
+non_ibis_er_count <- sum(report_full$non_ibis_er, na.rm = TRUE)
+ibis_inpatient_count <- sum(report_full$ibis_inpatient, na.rm = TRUE)
+
+report_counts <- list(
+  event_type = event_type_counts,
+  status = status_counts,
+  tablet_status = tablet_status_counts,
+  condition_counts = condition_counts,
+  ibis_er = ibis_er_count,
+  non_ibis_er = non_ibis_er_count,
+  ibis_inpatient = ibis_inpatient_count
+)
+
+# Print or view the counts
+print(report_counts)
+
+```
+
+
+mcnemar.test for count data for pre and post ibis
+table admit_count, pre, post
+
+```{r}
+# Create 2x2 table for pre and post IBIS inpatient admissions
+table_admit <- table(report_full$pre_ibis_inpatient, report_full$post_ibis_inpatient)
+
+# Look at the table
+print(table_admit)
+
+```
+```{r}
+mcnemar.test(table_admit)
+```
 
 

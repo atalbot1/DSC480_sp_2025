@@ -411,19 +411,36 @@ print(report_counts)
 ```
 
 
-mcnemar.test for count data for pre and post ibis
+mcnemar.test for TOTAL count data for pre and post ibis
 table admit_count, pre, post
+filter 
+org_name == "Unicare- Study"
+event_type == "no_utilization"
+dimnames
 
 ```{r}
-# Create 2x2 table for pre and post IBIS inpatient admissions
-table_admit <- table(report_full$pre_ibis_inpatient, report_full$post_ibis_inpatient)
+admit_table <- report_full %>%
+  filter(org_name == "Unicare - Study",  event_type == "no_utilization") %>%
+  select(pre_ibis_inpatient, post_ibis_inpatient)# total pre and during
 
-# Look at the table
+#0 if 0, 1 if not zero
+
+#2x2 contingency table
+table_admit <- table(pre = admit_table$pre_ibis_inpatient, post = admit_table$post_ibis_inpatient)
+
 print(table_admit)
 
 ```
 ```{r}
 mcnemar.test(table_admit)
 ```
+## boxplot coverage days before and during ibis
+## x axis period(both during and pre)
+## y axis (days)
+
+# find the mean coverage days and hoe many have zero coverage days on ibis
+#then filter out the zeros
+
+#wilcox test
 
 

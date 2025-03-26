@@ -438,9 +438,101 @@ mcnemar.test(table_admit)
 ## x axis period(both during and pre)
 ## y axis (days)
 
-# find the mean coverage days and hoe many have zero coverage days on ibis
+```{r}
+# Load necessary package
+library(dplyr)
+
+# Filter the data based on organization and event type, then select relevant columns
+admit_table <- report_full %>%
+  filter(org_name == "Unicare - Study", event_type == "no_utilization") %>%
+  select(pre_ibis_inpatient, post_ibis_inpatient)
+
+# Convert any non-zero values to 1 (0 remains 0)
+admit_table <- admit_table %>%
+  mutate(pre_ibis_inpatient = ifelse(pre_ibis_inpatient > 0, 1, 0),
+         post_ibis_inpatient = ifelse(post_ibis_inpatient > 0, 1, 0))
+
+# Create the 2x2 contingency table
+table_admit <- table(pre = admit_table$pre_ibis_inpatient, post = admit_table$post_ibis_inpatient)
+
+# Print the table
+print(table_admit)
+
+
+```
+
+
+
+# find the mean coverage days and ho many have zero coverage days on ibis
 #then filter out the zeros
 
-#wilcox test
+```{r}
+# Find the mean coverage days on IBIS
+mean_coverage_days <- mean(report_full$covered_days_on_ibis, na.rm = TRUE)
+print(paste("Mean coverage days on IBIS:", mean_coverage_days))
 
+# Count how many patients have zero coverage days on IBIS
+zero_coverage_count <- sum(report_full$covered_days_on_ibis == 0, na.rm = TRUE)
+print(paste("Number of patients with zero coverage days on IBIS:", zero_coverage_count))
+
+# Filter out the patients with zero coverage days
+filtered_data <- report_full %>%
+  filter(covered_days_on_ibis > 0)
+
+# View the filtered data (optional)
+head(filtered_data)
+
+```
+
+
+#wilcox test vs difference, take out all patients with zero ibis
+```{r}
+# Check if columns exist in the original dataset
+colnames(report_full)
+
+# Use the correct column names (assuming pre_ibis_inpatient_days and post_ibis_inpatient_days)
+filtered_data <- report_full %>%
+  filter(covered_days_on_ibis > 0)
+
+# Ensure the correct columns are numeric
+filtered_data$pre_ibis_inpatient_days <- as.numeric(filtered_data$pre_ibis_inpatient_days)
+filtered_data$post_ibis_inpatient_days <- as.numeric(filtered_data$post_ibis_inpatient_days)
+
+# Perform the Wilcoxon Signed-Rank Test
+wilcox_test_result <- wilcox.test(filtered_data$pre_ibis_inpatient_days, filtered_data$post_ibis_inpatient_days, paired = TRUE)
+
+# Print the result of the test
+print(wilcox_test_result)
+
+
+
+```
+
+
+
+# number of counts over  time
+
+```{r}
+# Replace 'event_date' with the actual column name
+report_full$event_date <- as.Date(report_full$event_date)
+
+# Now, create a new column for the year-month format (if you want to group by month)
+report_full$year_month <- format(report_full$event_date, "%Y-%m")
+
+# Count events by year-month
+event_counts_by_time <- report_full %>%
+  group_by(year_month) %>%
+  summarise(event_count = n())
+
+# View the result
+print(event_counts_by_time)
+
+# Optional: Plot the counts over time
+library(ggplot2)
+ggplot(event_counts_by_time, aes(x = year_month, y = event_count)) +
+  geom_line(color = "steelblue") +
+  theme_minimal() +
+  labs(title = "Event Counts Over Time", x = "Time (Year-Month)", y = "Event Count")
+
+```
 

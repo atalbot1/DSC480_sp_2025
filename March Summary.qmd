@@ -1,0 +1,98 @@
+---
+title: "March Summary"
+---
+
+## State Distribution/ State Count
+
+The results show how many members are from each state in the dataset. Massachusetts has the highest number, with 1,527 members. Pennsylvania follows with 339 members, and New Hampshire has 178. Maryland has 51 members, while Rhode Island has 39. Florida has only 6 members, and South Carolina and Texas each have just 2. Indiana has the lowest number, with only 1 member. This means that most of the members are concentrated in Massachusetts, while some states have very few. The bar chart helps visualize this difference by showing how the numbers compare across states.
+
+```{r}
+barplot(table(report_full$state), las=2, col='skyblue', main='Number of Members by State')
+
+```
+
+## Event Type Frequency
+
+The results show the distribution of different event types in the dataset. The most common event type is "no utilization," which appears 1,123 times, making up about 52% of all events. Emergency events occur 740 times, accounting for 34% of the total. Inpatient events are less frequent, with 295 occurrences, representing 14% of the dataset. The least common event type is "observation," which happens only twice, making up less than 1% of all events. This means that most records indicate no utilization of services, while emergency visits are the second most common. Inpatient stays occur less frequently, and observation cases are extremely rare. The bar chart visually highlights these differences, making it easier to see which event types happen most often.
+
+```{r}
+ggplot(report_full, aes(x = event_type)) +
+  geom_bar(fill = "steelblue") +
+  theme_minimal() +
+  labs(title = "Event Type Distribution", x = "Event Type", y = "Count")
+```
+
+## Prevalance of diabetes(or any other condition)
+
+The results show the prevalence of four health conditions—diabetes, hypertension, asthma, and depression—among members in the dataset. Diabetes is present in 35.74% of the population (772 members), while 64.26% (1,388 members) do not have it. Hypertension is the most common condition, affecting 71.53% (1,545 members), while 28.47% (615 members) do not have it. Asthma is the least common, with only 18.70% (404 members) diagnosed, whereas 81.30% (1,756 members) do not have asthma. Depression is present in 39.31% (849 members), while 60.69% (1,311 members) do not have it. These results indicate that hypertension is the most widespread condition, while asthma is the least common. Diabetes and depression also affect a significant portion of the population, highlighting important health concerns among members.
+
+## Members with IBIS coverage vs without
+
+Out of all the members in the dataset, 996 individuals have IBIS coverage for at least one day, while the rest have zero coverage. This accounts for 46.11% of the total population, meaning that more than half of the members do not have any IBIS coverage.
+
+## Compare ER visits pre vs post IBIS
+
+The results show the impact of IBIS coverage on emergency room (ER) visits. Before IBIS, most members had zero ER visits, as indicated by the median and quartiles being 0, with an average of 0.2292 visits per person. After IBIS coverage began, the average number of ER visits decreased to 0.0444, suggesting a reduction overall. However, the maximum number of ER visits for any member remained 1 both before and after IBIS. When comparing individual changes, 495 members (about 23%) had fewer ER visits after IBIS started, indicating a positive effect for some. However, since most members did not have ER visits before or after IBIS, the overall impact appears limited. These findings suggest that while IBIS coverage may have contributed to reducing ER visits for some individuals, the majority of members did not experience a significant change.
+
+## Inpatient days comparison
+
+The total number of inpatient days decreased significantly, from 889.5 days before IBIS to 218.5 days after IBIS, indicating a reduction of about 75% in hospital stays. Similarly, the average number of inpatient days per member dropped from 0.41 days to 0.10 days, suggesting that members spent less time in the hospital after IBIS coverage started. These findings suggest that IBIS coverage may have contributed to reducing inpatient hospital stays, potentially improving healthcare access and management for members. However, further analysis would be needed to determine whether other factors influenced this decline.
+
+## Members with completed reminders
+
+The results show that 1,335 members completed at least one reminder day, indicating that a significant number of members engaged with the reminder system. However, the distribution of reminder days is quite varied. Many members completed zero reminder days, as the minimum and first quartile values are both 0. For those who did complete reminder days, the median number was 3, meaning half of the members who participated completed 3 or fewer days. On average, members who completed reminder days finished about 115 days, but this average is higher than the median because a small number of members completed a much larger number of days, with the highest being 1,990 days. The histogram would show that most members completed only a few reminder days, while a small group completed many more, leading to a rightward skew in the distribution.
+
+```{r}
+hist(report_full$completed_reminder_days, breaks=20, main="Completed Reminder Days", col="purple")
+```
+
+## DCP engagement
+
+The average DCP count across all members is 150.6, meaning that, on average, each member has a moderate number of DCP counts. However, a small group of 37 members have significantly higher DCP counts, each exceeding 1,000. These 37 members stand out from the rest of the population due to their exceptionally high DCP counts, suggesting that a few individuals are responsible for a much larger portion of the total DCP counts. This could indicate that these members have unique healthcare needs or behaviors, which may require further investigation or special attention.
+
+## Members with diabetes and hypertension
+
+The analysis reveals that 670 members have both diabetes and hypertension.
+
+## Members over 80 with at least 1 ER visit post IBIS
+
+There are 21 elderly members (aged over 80) who had one or more ER visits after IBIS coverage began. The columns shown give further details about these members, including their patient IDs, ages, the number of ER visits after IBIS, and how many days they were covered by IBIS.
+
+## Unique values and counts for events_full
+
+The dataset contains four unique event types: emergency, inpatient, no utilization, and observation. The most frequent event type is emergency, which occurred 2,240 times. This is followed by inpatient events, with 1,532 occurrences, making it the second most common event type. No utilization events were recorded 1,123 times, and observation events were the least common, with only 96 occurrences. The bar plot visually supports these findings, showing that emergency and inpatient events are far more frequent than observation and no utilization events. This suggests that most events in the dataset are related to more intensive healthcare services, such as emergency care or inpatient stays, while observation and no utilization events are much less common.
+
+```{r}
+ggplot(events_full, aes(x = event_type)) +
+  geom_bar(fill = "steelblue") +
+  theme_minimal() +
+  labs(title = "Event Type Frequency", x = "Event Type", y = "Count")
+
+```
+
+## State-wise event distribution
+
+The analysis of events by state reveals significant variation in the number of events across different states. Massachusetts has the highest number of events, with 3,777 occurrences, followed by New Hampshire with 442 events and Pennsylvania with 432 events. States like Rhode Island and South Carolina have fewer events, with only 148 and 4 events, respectively. Texas and Florida show very few events, with 2 and 9 events, respectively, while Indiana, Maryland, and other states have just 1 event each. The bar plot visually illustrates this, with Massachusetts having the most significant number of events, while most other states have much smaller counts.
+
+## Patient event counts
+
+The analysis reveals that there are no patients with more than 50 events in the dataset, as indicated by the result of 0 when counting high utilizers. The top 10 patients with the highest event counts are listed, showing their patient IDs and corresponding event counts. These top 10 patients have between 20 and 45 events each. The highest utilizers are patient IDs 8286 (with 45 events), followed by 8100 (with 40 events), and other patients in the top 10 with similar counts. This suggests that while some patients have a relatively high number of events, none exceed the threshold of 50 events.
+
+## find high utilizers in both datasets
+
+```{r}
+
+ggplot(patient_activity, aes(x = event_count, y = report_count)) +
+  geom_point(alpha = 0.6, color = "darkblue") +
+  theme_minimal() +
+  labs(title = "Patient Event Count vs Report Count", x = "Event Count", y = "Report Count")
+
+```
+
+## Event counts
+
+The analysis of event types in the dataset reveals the distribution of events across different categories. The most frequent event type is emergency, with 2,023 occurrences, followed by inpatient events, which occur 1,390 times. No utilization events are also common, with 1,108 occurrences, while observation events are the least frequent, recorded only 84 times. This indicates that emergency and inpatient events are the primary types in the dataset, while observation events are relatively rare in comparison.
+
+## Mean coverage days and ho many have zero coverage days on ibis
+
+The analysis of the IBIS coverage days revealed that, on average, patients have approximately 127.31 coverage days recorded on IBIS. However, a significant portion of the dataset shows that 1164 patients have zero coverage days, indicating that these individuals did not utilize IBIS during the observed period. To focus on patients who have actually used IBIS, the data was filtered to exclude those with zero coverage days. After filtering, the dataset now contains only those patients who have at least one recorded day of IBIS coverage.

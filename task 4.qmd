@@ -463,8 +463,11 @@ print(table_admit)
 
 
 
-# find the mean coverage days and ho many have zero coverage days on ibis
+#find the mean coverage days and ho many have zero coverage days on ibis
 #then filter out the zeros
+#look at unicarw study vs everyine else
+#man pre and during
+#chronic and age
 
 ```{r}
 # Find the mean coverage days on IBIS
@@ -479,18 +482,64 @@ print(paste("Number of patients with zero coverage days on IBIS:", zero_coverage
 filtered_data <- report_full %>%
   filter(covered_days_on_ibis > 0)
 
-# View the filtered data (optional)
+# View the filtered data 
 head(filtered_data)
+ #denity plot of coverage days on and pre
+
+```
+```{r}
+unicarw_comparison <- filtered_data %>%
+  group_by("Unicare - Study") %>%
+  summarise(mean_coverage_days = mean(covered_days_on_ibis, na.rm = TRUE),
+            count = n())
+
+print(unicarw_comparison)
+
+```
+```{r}
+men_pre_during <- filtered_data %>%
+  filter(gender == "Male") %>%
+  group_by("Unicare - Study") %>%
+  summarise(mean_coverage_days = mean(covered_days_on_ibis, na.rm = TRUE),
+            count = n())
+
+print(men_pre_during)
+
+```
+
+```{r}
+
+chronic_analysis <- filtered_data %>%
+  group_by(condition_count) %>%
+  summarise(mean_coverage_days = mean(covered_days_on_ibis, na.rm = TRUE),
+            count = n())
+
+print(chronic_analysis)
+
+# Age analysis: categorize into age groups
+filtered_data <- filtered_data %>%
+  mutate(age = case_when(
+    age < 30 ~ "<30",
+    age >= 30 & age < 50 ~ "30-49",
+    age >= 50 ~ "50+"
+  ))
+
+age_analysis <- filtered_data %>%
+  group_by(age) %>%
+  summarise(mean_coverage_days = mean(covered_days_on_ibis, na.rm = TRUE),
+            count = n())
+
+print(age_analysis)
 
 ```
 
 
+
+
 #wilcox test vs difference, take out all patients with zero ibis
 ```{r}
-# Check if columns exist in the original dataset
 colnames(report_full)
 
-# Use the correct column names (assuming pre_ibis_inpatient_days and post_ibis_inpatient_days)
 filtered_data <- report_full %>%
   filter(covered_days_on_ibis > 0)
 
@@ -504,8 +553,6 @@ wilcox_test_result <- wilcox.test(filtered_data$pre_ibis_inpatient_days, filtere
 # Print the result of the test
 print(wilcox_test_result)
 
-
-
 ```
 
 
@@ -514,7 +561,7 @@ print(wilcox_test_result)
 
 ```{r}
 # Replace 'event_date' with the actual column name
-report_full$event_date <- as.Date(report_full$event_date)
+#report_full$event_date <- as.Date(report_full$event_date)
 
 # Now, create a new column for the year-month format (if you want to group by month)
 report_full$year_month <- format(report_full$event_date, "%Y-%m")
@@ -533,6 +580,92 @@ ggplot(event_counts_by_time, aes(x = year_month, y = event_count)) +
   geom_line(color = "steelblue") +
   theme_minimal() +
   labs(title = "Event Counts Over Time", x = "Time (Year-Month)", y = "Event Count")
+
+```
+
+## Boot
+
+```{r}
+library(dplyr)
+library(boot)
+
+# Define a function to calculate the mean for bootstrapping
+boot_mean <- function(data, indices) {
+  sample_data <- data[indices]
+  return(mean(sample_data, na.rm = TRUE))
+}
+
+```
+
+```{r}
+## compare unicare pre and post
+# Remove NAs
+coverage_data <- na.omit(report$covered_days_on_ibis)
+
+# Bootstrap the mean
+boot_result <- boot(data = coverage_data, statistic = boot_mean, R = 1000)
+
+# Print results
+print(boot_result)
+
+# Confidence Interval (95%)
+boot.ci(boot_result, type = "perc")
+
+```
+```{r}
+unicare_groups <- filtered_data %>%
+  group_by("Unicare - Study") %>%
+  group_split()
+
+# Bootstrap mean per group
+boot_by_group <- lapply(unicare_groups, function(group_df) {
+  coverage_vals <- group_df$covered_days_on_ibis
+  boot_out <- boot(data = coverage_vals, statistic = boot_mean, R = 1000)
+  ci <- boot.ci(boot_out, type = "perc")
+  
+  list(
+    group = unique(group_df$`Unicare - Study`),
+    mean = mean(coverage_vals),
+    ci_low = ci$percent[4],
+    ci_high = ci$percent[5],
+    n = nrow(group_df)
+  )
+})
+
+# Convert to dataframe
+boot_by_group_df <- do.call(rbind, lapply(boot_by_group, as.data.frame))
+print(boot_by_group_df)
+
+```
+
+```{r}
+men_data <- filtered_data %>%
+  filter(gender == "Male")
+
+men_groups <- men_data %>%
+  group_by(`Unicare - Study`) %>%
+  group_split()
+
+boot_men_group <- lapply(men_groups, function(group_df) {
+  coverage_vals <- group_df$covered_days_on_ibis
+  boot_out <- boot(data = coverage_vals, statistic = boot_mean, R = 1000)
+  ci <- boot.ci(boot_out, type = "perc")
+  
+  list(
+    group = unique(group_df$`Unicare - Study`),
+    mean = mean(coverage_vals),
+    ci_low = ci$percent[4],
+    ci_high = ci$percent[5],
+    n = nrow(group_df)
+  )
+})
+
+boot_men_group_df <- do.call(rbind, lapply(boot_men_group, as.data.frame))
+print(boot_men_group_df)
+
+```
+
+```{r}
 
 ```
 

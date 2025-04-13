@@ -1,0 +1,233 @@
+---
+title: "Unicare pre vs during Ibis"
+subtitle: "Preliminary analysis of inpatient admissions"
+date: "Feb 2025"
+format: pdf
+editor_options:
+  chunk_output_type: inline
+---
+
+```{r knitr, warning=FALSE, include=FALSE}
+options(htmltools.dir.version = FALSE, digits = 2)
+knitr::opts_chunk$set(
+  fig.width=7.5, fig.height=4.2, fig.retina=3,
+  out.width = "100%",
+  cache = FALSE,
+  echo = FALSE,
+  message = FALSE,
+  warning = FALSE,
+  fig.show = TRUE,
+  hiline = TRUE,
+  require("knitr")
+)
+
+```
+
+```{r, echo=FALSE, warning=FALSE, include=FALSE}
+
+library(tidyverse)
+
+library(lubridate)
+
+
+
+```
+
+```{r}
+event_file <- "2025_02_18_utilization_events.csv"
+report_file <- "2025_02_18_utilization_report.csv"
+
+source("read_clean.R")
+```
+
+There are `r report_full %>% filter(org_name == 'Unicare - Study') %>% nrow()` members in the dataset. Initially, we dont consider the time duration of coverage during each period.
+
+```{r echo = FALSE}
+
+ibis_inpatient_table <- events_full %>%  filter(org_name == "Unicare - Study")  %>%
+    filter(event_type == "inpatient", event_start_date > ibis_coverage_start_date &
+           event_start_date < ibis_coverage_end_date) %>%
+    summarize(.by = pid, ibis_inpatient_count = n())
+
+pre_ibis_inpatient_table <- events_full %>%  filter(org_name == "Unicare - Study")  %>%
+    filter(event_type == "inpatient", event_start_date < ibis_coverage_start_date &
+           event_start_date > coverage_start_date) %>%
+    summarize(.by = pid, pre_ibis_inpatient_count = n())
+
+
+```
+
+```{r}
+inpatient_table <- pre_ibis_inpatient_table %>% 
+    full_join(ibis_inpatient_table, by = c("pid")) %>% 
+    full_join(report_full %>% filter(org_name == "Unicare - Study") %>% select(pid), by = c("pid")) %>% 
+     replace(is.na(.), 0)
+    
+```
+
+```{r}
+coverage_table <- report_full %>% filter(org_name =="Unicare - Study") %>% 
+    select(pid, covered_days_pre_ibis, covered_days_on_ibis) %>%
+    select(pid, covered_days_pre_ibis, covered_days_on_ibis)
+```
+
+### Remove patients with zero days coverage
+
+```{r}
+coverage_table_no_zero <- coverage_table %>% filter(covered_days_on_ibis != 0) %>% 
+    filter(covered_days_pre_ibis != 0)
+
+coverage_table_no_zero_long <- coverage_table_no_zero %>% pivot_longer(c(2,3), names_to = "period",
+                                 values_to = "covered_days") %>% 
+    mutate(period = fct_recode(period,
+                             pre = "covered_days_pre_ibis",
+                              during = "covered_days_on_ibis")) 
+    
+coverage_table_no_zero_long %>% 
+    ggplot(aes(x = period, y = covered_days)) + 
+    geom_boxplot(aes(fill = period), show.legend = FALSE) +
+ labs(title = "Coverage days before and during ibis, with zero days removed",
+         x = "Period", y = "Days")
+```
+
+### Tests on admits per coverage duration
+
+In order to take into account the imbalance in coverage days, we can find the number of events per time. A paired t test on admits per day or year is not appropriate as the distribution of admits per day is not normal.
+
+```{r}
+inpatient_table_per_1000yr <- inpatient_table  %>% inner_join(coverage_table_no_zero, by = "pid") %>% 
+    mutate(pre_admit_per_1000yr = 365*1000*pre_ibis_inpatient_count/covered_days_pre_ibis,
+           during_admit_per_1000yr = 365*1000*ibis_inpatient_count/covered_days_on_ibis)
+
+```
+
+## Annemarie Work
+
+# Pre Ibis vs Durinf Ibis
+
+```{r}
+summary(coverage_table_no_zero$covered_days_pre_ibis)
+summary(coverage_table_no_zero$covered_days_on_ibis)
+```
+
+```{r}
+boxplot(
+  coverage_table_no_zero$covered_days_pre_ibis,
+  coverage_table_no_zero$covered_days_on_ibis,
+  names = c("Pre-IBIS", "On-IBIS"),
+  main = "Coverage Days: Pre-IBIS vs On-IBIS",
+  ylab = "Days Covered",
+  col = c("lightblue", "lightgreen")
+)
+```
+
+```{r}
+t.test(
+  coverage_table_no_zero$covered_days_pre_ibis,
+  coverage_table_no_zero$covered_days_on_ibis,
+  paired = TRUE
+)
+```
+
+```{r}
+plot(
+  density(coverage_table_no_zero$covered_days_pre_ibis),
+  col = "blue",
+  main = "Density Plot: Pre-IBIS vs On-IBIS",
+  xlab = "Days Covered",
+  lwd = 2
+)
+lines(
+  density(coverage_table_no_zero$covered_days_on_ibis),
+  col = "green",
+  lwd = 2
+)
+legend("topright", legend = c("Pre-IBIS", "On-IBIS"), col = c("blue", "green"), lwd = 2)
+```
+```{r}
+hist(coverage_table_no_zero$covered_days_pre_ibis,
+     main = "Histogram of Pre-IBIS Coverage Days",
+     xlab = "Pre-IBIS Days Covered", col = "lightblue", breaks = 30)
+
+hist(coverage_table_no_zero$covered_days_on_ibis,
+     main = "Histogram of On-IBIS Coverage Days",
+     xlab = "On-IBIS Days Covered", col = "lightgreen", breaks = 30)
+```
+```{r}
+coverage_table_no_zero$diff_days <- coverage_table_no_zero$covered_days_on_ibis - coverage_table_no_zero$covered_days_pre_ibis
+
+summary(coverage_table_no_zero$diff_days)
+
+hist(coverage_table_no_zero$diff_days,
+     main = "Difference in Coverage Days (On-IBIS - Pre-IBIS)",
+     xlab = "Difference in Days", col = "purple", breaks = 30)
+```
+
+```{r}
+wilcox.test(coverage_table_no_zero$covered_days_on_ibis,
+            coverage_table_no_zero$covered_days_pre_ibis,
+            paired = TRUE)
+```
+```{r}
+plot(coverage_table_no_zero$covered_days_pre_ibis,
+     coverage_table_no_zero$covered_days_on_ibis,
+     main = "Coverage: Pre-IBIS vs On-IBIS",
+     xlab = "Pre-IBIS Days", ylab = "On-IBIS Days",
+     pch = 19, col = rgb(0.1, 0.2, 0.5, 0.5))
+abline(lm(covered_days_on_ibis ~ covered_days_pre_ibis, data = coverage_table_no_zero), col = "red")
+
+```
+```{r}
+coverage_table_no_zero$coverage_ratio <- coverage_table_no_zero$covered_days_on_ibis / coverage_table_no_zero$covered_days_pre_ibis
+
+summary(coverage_table_no_zero$coverage_ratio)
+
+hist(coverage_table_no_zero$coverage_ratio,
+     main = "Coverage Ratio (On-IBIS / Pre-IBIS)",
+     xlab = "Coverage Ratio", col = "orange", breaks = 30)
+
+```
+
+
+
+## Inpatient Table
+
+```{r}
+barplot(
+  c(
+    sum(inpatient_table$pre_ibis_inpatient_count),
+    sum(inpatient_table$ibis_inpatient_count)
+  ),
+  names.arg = c("Pre-IBIS", "On-IBIS"),
+  main = "Total Inpatient Counts: Pre-IBIS vs On-IBIS",
+  ylab = "Total Count",
+  col = c("orange", "red")
+)
+
+```
+## match it package to compare two populationa
+#ibis study vs everyone else propensity score
+#check balance
+#estimate treatment affect- unicare on ibis, everyone else not
+
+Matchit
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

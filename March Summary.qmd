@@ -1,5 +1,6 @@
 ---
 title: "March Summary"
+format: pdf
 ---
 
 ## State Distribution/ State Count
@@ -7,8 +8,11 @@ title: "March Summary"
 The results show how many members are from each state in the dataset. Massachusetts has the highest number, with 1,527 members. Pennsylvania follows with 339 members, and New Hampshire has 178. Maryland has 51 members, while Rhode Island has 39. Florida has only 6 members, and South Carolina and Texas each have just 2. Indiana has the lowest number, with only 1 member. This means that most of the members are concentrated in Massachusetts, while some states have very few. The bar chart helps visualize this difference by showing how the numbers compare across states.
 
 ```{r}
-barplot(table(report_full$state), las=2, col='skyblue', main='Number of Members by State')
+# Number of records by state
+table(report_full$state)
 
+# Plot the distribution
+barplot(table(report_full$state), las=2, col='skyblue', main='Number of Members by State')
 ```
 
 ## Event Type Frequency
